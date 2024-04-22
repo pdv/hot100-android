@@ -54,6 +54,13 @@ from hot100
 where performer = :performer and title = :title
     """)
     suspend fun entries(performer: String, title: String): List<Entry>
+
+    @Query("""
+select current_week as peak, performer, title
+from hot100
+where chart_week = :week
+    """)
+    suspend fun chart(week: String): List<Track>
 }
 
 @Database(entities = [ChartEntry::class], version = 1)

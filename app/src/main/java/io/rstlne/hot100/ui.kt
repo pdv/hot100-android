@@ -1,11 +1,16 @@
 package io.rstlne.hot100
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusable
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -30,10 +35,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.NavHostController
@@ -49,6 +57,58 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 @Composable
+fun TopBar(
+    navController: NavController,
+    title: String
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(48.dp)
+            .background(Color.DarkGray)
+    ) {
+        IconButton(onClick = { navController.navigateUp() }) {
+            Icon(imageVector = Icons.Filled.ArrowBack, contentDescription = "Back")
+        }
+        Box(contentAlignment = Alignment.CenterStart, modifier = Modifier.fillMaxHeight()) {
+            Text(title)
+        }
+    }
+}
+
+@Composable
+fun ChartView(
+    navController: NavController,
+    week: String,
+    viewModel: Hot100ViewModel = viewModel(factory = Hot100ViewModel.Factory)
+) {
+    var tracks: List<Track> by remember { mutableStateOf(mutableListOf()) }
+    LaunchedEffect(true) {
+        tracks = viewModel.dao.chart(week)
+    }
+    Scaffold(
+        topBar = { TopBar(navController, title = week) },
+    ) { padding ->
+        LazyColumn(modifier = Modifier.padding(padding)) {
+            items(tracks) { track ->
+                Surface(onClick = {
+                    navController.navigate("tracks/${track.performer}/${track.title}")
+                }) {
+                    ListItem(
+                        leadingContent = {
+                            Text("${track.peak}")
+                        },
+                        headlineContent = {
+                            Text("${track.performer} - ${track.title}")
+                        }
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
 fun TrackView(
     navController: NavController,
     performer: String,
@@ -56,27 +116,23 @@ fun TrackView(
     viewModel: Hot100ViewModel = viewModel(factory = Hot100ViewModel.Factory),
 ) {
     var entries: List<Entry> by remember { mutableStateOf(mutableListOf()) }
+    val peak = entries.minOfOrNull { it.position }
     LaunchedEffect(true) {
         entries = viewModel.dao.entries(performer, title)
     }
     Scaffold(
-        topBar = {
-            Row {
-                IconButton(onClick = {
-                    navController.navigateUp()
-                }) {
-                    Icon(
-                        imageVector = Icons.Filled.ArrowBack,
-                        contentDescription = "Back"
-                    )
-                }
-                Text("$performer - $title")
-            }
-        }
+        topBar = { TopBar(navController, title = "$performer - $title") }
     ) { padding ->
         LazyColumn(modifier = Modifier.padding(padding)) {
             items(entries) { entry ->
-                Text("${entry.week} - ${entry.position}")
+                Surface(onClick = {
+                    navController.navigate("charts/${entry.week}")
+                }) {
+                    ListItem(headlineContent = {
+                        val isPeak = if (entry.position == peak) "*" else ""
+                        Text("${entry.week} (${entry.position}$isPeak)")
+                    })
+                }
             }
         }
     }
@@ -143,6 +199,12 @@ fun Nav(
             val performer = entry.arguments?.getString("performer") ?: "Rick Astley"
             val title = entry.arguments?.getString("title") ?: "Never Gonna Give You Up"
             TrackView(navController, performer, title)
+        }
+        composable("charts/{week}",
+            arguments = listOf(navArgument("week") { type = NavType.StringType })
+        ) { entry ->
+            val week = entry.arguments?.getString("week") ?: "1958-08-04"
+            ChartView(navController, week)
         }
     }
 }
