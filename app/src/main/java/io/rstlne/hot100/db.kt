@@ -29,19 +29,31 @@ data class ChartEntry(
 data class Track(
     val title: String,
     val performer: String,
-    val peakPosition: Int
+    val peak: Int
+)
+
+data class Entry(
+    val week: String,
+    val position: Int,
 )
 
 @Dao
 interface Hot100Dao {
     @Query("""
-select title, performer, min(peak_pos) as peakPosition
+select title, performer, min(peak_pos) as peak
 from hot100
 where performer like '%' || :query || '%' or title like '%' || :query || '%'
 group by 1, 2
 order by 3
 """)
     suspend fun search(query: String): List<Track>
+
+    @Query("""
+select chart_week as week, current_week as position
+from hot100
+where performer = :performer and title = :title
+    """)
+    suspend fun entries(performer: String, title: String): List<Entry>
 }
 
 @Database(entities = [ChartEntry::class], version = 1)
