@@ -7,7 +7,9 @@ import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.material3.darkColorScheme
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
@@ -16,7 +18,6 @@ import androidx.lifecycle.createSavedStateHandle
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import androidx.room.Room
-import io.rstlne.hot100.ui.theme.Hot100Theme
 
 class Hot100ViewModel(
     val dao: Hot100Dao,
@@ -39,12 +40,17 @@ class Hot100ViewModel(
     }
 }
 
-class MainActivity : ComponentActivity() {
+class Hot100Activity: ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            Hot100Theme {
-                // A surface container using the 'background' color from the theme
+            MaterialTheme(
+                colorScheme = darkColorScheme(
+                    primary = Color.Gray,
+                    secondary = Color.DarkGray,
+                    tertiary = Color.LightGray
+                )
+            ) {
                 Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
                     Nav()
                 }
