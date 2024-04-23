@@ -7,6 +7,7 @@ import androidx.room.Entity
 import androidx.room.PrimaryKey
 import androidx.room.Query
 import androidx.room.RoomDatabase
+import java.io.Serializable
 
 @Entity(tableName = "hot100")
 data class ChartEntry(
@@ -30,12 +31,12 @@ data class Track(
     val title: String,
     val performer: String,
     val peak: Int
-)
+): Serializable
 
 data class Entry(
     val week: String,
     val position: Int,
-)
+): Serializable
 
 @Dao
 interface Hot100Dao {
@@ -45,6 +46,7 @@ from hot100
 where performer like '%' || :query || '%' or title like '%' || :query || '%'
 group by 1, 2
 order by 3
+limit 100
 """)
     suspend fun search(query: String): List<Track>
 
