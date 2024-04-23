@@ -162,10 +162,14 @@ fun SearchView(
             value = searchQuery,
             onValueChange = { query ->
                 searchQuery = query
-                coroutineScope.launch {
-                    withContext(Dispatchers.IO) {
-                        searchResults = repository.dao.search(query)
+                if (query.length >= 3) {
+                    coroutineScope.launch {
+                        withContext(Dispatchers.IO) {
+                            searchResults = repository.dao.search(query)
+                        }
                     }
+                } else {
+                    searchResults = listOf()
                 }
             },
             trailingIcon = {
